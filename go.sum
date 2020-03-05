@@ -5,6 +5,8 @@ github.com/dgrijalva/jwt-go v3.2.0+incompatible h1:7qlOGliEKZXTDg6OTjfoBKDXWrumC
 github.com/dgrijalva/jwt-go v3.2.0+incompatible/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
 github.com/dllgo/go-redis v0.0.0-20200305130827-891922388bbe h1:9gP5Z1GVsmNdJAt8cCrAtjyI9JHRkFby9lPG0eNv51o=
 github.com/dllgo/go-redis v0.0.0-20200305130827-891922388bbe/go.mod h1:glo+PYCGDT8bzPFaE4Z2ke6qJA+JQ+w/qWozGe9indg=
+github.com/dllgo/go-redis v1.0.0 h1:0TtjMp8pCT8sSeT4sOTlPA7C5syQhzpqfugQTfIGGMA=
+github.com/dllgo/go-redis v1.0.0/go.mod h1:Qap8q6ZrWUamuMwuJtbO8wQUMzU5S/Qg/ByjHaD0bBs=
 github.com/dllgo/go-utils v0.0.0-20200305134551-2d2fbda92c7f h1:10q8yhqK5N0a4fksk93HEQ4egQTTm8iYktQZkUNKN30=
 github.com/dllgo/go-utils v0.0.0-20200305134551-2d2fbda92c7f/go.mod h1:upYX9Dv3lNpyDULViEkQ78MIKaE9tL6zV5M6sWIEW1k=
 github.com/garyburd/redigo v1.6.0 h1:0VruCpn7yAIIu7pWVClQC8wxCJEcG3nyzpMSHKi1PQc=

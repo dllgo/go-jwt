@@ -1,8 +1,8 @@
 package jwtplus
 
 import (
+	redisplus "github.com/dllgo/go-redis"
 	"github.com/dllgo/go-utils"
-	"github.com/dllgo/go-redis"
 )
 
 // Storer 黑名单存储接口
@@ -21,13 +21,15 @@ func (a *Store) tokenKey(token string) string {
 }
 
 // 放入令牌，指定到期时间
-func (a *Store) Set(tokenString string, expiration int64) error {
-	return redisplus.Redis.String.SetEX(a.tokenKey(tokenString), "1", expiration).Error()
+func (a *Store) Set(tokenString string, expiration int64) (bool, error) {
+	client := redisplus.DefaultClient()
+	defer client.Close()
+	return client.SetEx(a.tokenKey(tokenString), "1", expiration)
 }
-
 
 // 检查令牌是否存在
 func (a *Store) Check(tokenString string) (bool, error) {
-	return redisplus.Redis.Key.Exists(a.tokenKey(tokenString)).Bool()
+	client := redisplus.DefaultClient()
+	defer client.Close()
+	return client.Exists(a.tokenKey(tokenString))
 }
-

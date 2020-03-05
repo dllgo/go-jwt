@@ -28,8 +28,11 @@ func (r *Handle) DestroyToken(token string) error {
 		return err
 	}
 	expired := claims.ExpiresAt - time.Now().Unix()
-	println(expired)
-	return Storer.Set(token, expired)
+	_, err = Storer.Set(token, expired)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // 根据token校验token是否有效
