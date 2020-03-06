@@ -22,14 +22,10 @@ func (a *Store) tokenKey(token string) string {
 
 // 放入令牌，指定到期时间
 func (a *Store) Set(tokenString string, expiration int64) (bool, error) {
-	client := redisplus.DefaultClient()
-	defer client.Close()
-	return client.SetEx(a.tokenKey(tokenString), "1", expiration)
+	return redisplus.RedisClient.SetEx(a.tokenKey(tokenString), "1", expiration)
 }
 
 // 检查令牌是否存在
 func (a *Store) Check(tokenString string) (bool, error) {
-	client := redisplus.DefaultClient()
-	defer client.Close()
-	return client.Exists(a.tokenKey(tokenString))
+	return redisplus.RedisClient.Exists(a.tokenKey(tokenString))
 }
