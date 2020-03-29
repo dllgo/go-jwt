@@ -11,10 +11,10 @@ type MapClaims map[string]interface{}
 // 自定义Claims类
 type customClaims struct {
 	*jwt.StandardClaims
-	mapClaims *MapClaims
+	mapClaims MapClaims
 }
 
-func newClaims(conf *Config, userClaim *MapClaims) *customClaims {
+func newClaims(conf *Config, userClaim MapClaims) *customClaims {
 	c := &customClaims{
 		StandardClaims: &jwt.StandardClaims{
 			ExpiresAt: time.Now().Unix() + conf.duration,

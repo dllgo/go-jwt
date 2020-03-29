@@ -58,7 +58,7 @@ func (r *Handle) parseToken(token string) (*customClaims, error) {
 	return jclaim, nil
 }
 
-func (r *Handle) ParseToken(token string) (*MapClaims, error) {
+func (r *Handle) ParseToken(token string) (MapClaims, error) {
 	claims, err := r.parseToken(token)
 	if err != nil {
 		return nil, errors.New("parase with claims failed.")
@@ -82,7 +82,7 @@ func (r *Handle) ValidHttp(req *http.Request) bool {
 }
 
 // 从http请求中获取token，然后解析token
-func (r *Handle) ParseHttp(req *http.Request) (*MapClaims, error) {
+func (r *Handle) ParseHttp(req *http.Request) (MapClaims, error) {
 	token := r.httpToken(req)
 	return r.ParseToken(token)
 }
@@ -108,7 +108,7 @@ func (r *Handle) SetKey(key []byte) *Handle {
 }
 
 // 生成token
-func (r *Handle) GenToken(private *MapClaims) (string, error) {
+func (r *Handle) GenToken(private MapClaims) (string, error) {
 	r.lock.RLock()
 	defer r.lock.RUnlock()
 	customClaims := newClaims(r.Config, private)

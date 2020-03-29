@@ -25,7 +25,7 @@ func ValidHttp(req *http.Request) bool {
 }
 
 //解析token是否有效，如果有效，则返回userdata实例对象
-func ParseToken(token string) (*MapClaims, error) {
+func ParseToken(token string) (MapClaims, error) {
 	handleLock.RLock()
 	defer handleLock.RUnlock()
 	return defaultHandle.ParseToken(token)
@@ -40,7 +40,7 @@ func DestroyToken(token string) error {
 
 // 从http请求中获取用户信息，如果用户已经获得授权，则返回用户信息，error为nil，
 // 如果用户没有授权信息，或者授权信息已经过期，则errors为错误信息
-func ParseHttp(req *http.Request) (*MapClaims, error) {
+func ParseHttp(req *http.Request) (MapClaims, error) {
 	handleLock.RLock()
 	defer handleLock.RUnlock()
 	return defaultHandle.ParseHttp(req)
@@ -54,7 +54,7 @@ func SetHandle(jwtHandle *Handle) {
 }
 
 // 生成授权信息
-func GenToken(private *MapClaims) (string, error) {
+func GenToken(private MapClaims) (string, error) {
 	handleLock.RLock()
 	defer handleLock.RUnlock()
 	return defaultHandle.GenToken(private)
