@@ -3,6 +3,7 @@ package jwtplus
 import (
 	"errors"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -89,13 +90,42 @@ func (r *Handle) ParseHttp(req *http.Request) (MapClaims, error) {
 
 // 从http中获取token
 func (r *Handle) httpToken(req *http.Request) string {
-	token := ""
-	cookie, err := req.Cookie(header)
-	if err != nil || len(cookie.Value) == 0 {
-		req.ParseForm()
-		token = req.FormValue(header)
-	} else {
-		token = cookie.Value
+	token := r.tokenFromHeader(req, header)
+	if token == "" {
+		token = r.tokenFromCookie(req, header)
+	}
+	if token == "" {
+		token = r.tokenFromParam(req, header)
+	}
+	return token
+}
+
+func (r *Handle) tokenFromHeader(req *http.Request, key string) string {
+	authHeader := req.Header.Get(key)
+	if authHeader == "" {
+		return ""
+	}
+	parts := strings.SplitN(authHeader, " ", 2)
+	if !(len(parts) == 2 && parts[0] == "Bearer") {
+		return ""
+	}
+
+	return parts[1]
+}
+
+func (r *Handle) tokenFromCookie(req *http.Request, key string) string {
+	cookie, _ := req.Cookie(key)
+	if cookie.Value == "" {
+		return ""
+	}
+	return cookie.Value
+}
+
+func (r *Handle) tokenFromParam(req *http.Request, key string) string {
+	req.ParseForm()
+	token := c.FormValue(key)
+	if token == "" {
+		return ""
 	}
 	return token
 }
