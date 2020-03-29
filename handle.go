@@ -123,7 +123,7 @@ func (r *Handle) tokenFromCookie(req *http.Request, key string) string {
 
 func (r *Handle) tokenFromParam(req *http.Request, key string) string {
 	req.ParseForm()
-	token := c.FormValue(key)
+	token := req.FormValue(key)
 	if token == "" {
 		return ""
 	}
