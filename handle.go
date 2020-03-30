@@ -15,30 +15,40 @@ const (
 	header string = "Authorization"
 )
 
+type MapClaims map[string]interface{}
+
 // jwt操作
 type Handle struct {
 	*Config
 	lock *sync.RWMutex
 }
 
-//  销毁令牌
-// 临时存放到redis ，每次校验判断是否在redis中，如果在表示token无效
-func (r *Handle) DestroyToken(token string) error {
-	claims, err := r.parseToken(token)
-	if err != nil {
-		return err
+// 生成token
+func (r *Handle) TokenGenerator(data interface{}) (string, error) {
+	r.lock.RLock()
+	defer r.lock.RUnlock()
+	//
+	token := jwt.New(jwt.GetSigningMethod("HS256"))
+	claims := token.Claims.(jwt.MapClaims)
+	if v, ok := data.(map[string]interface{}); ok {
+		for key, value := range v {
+			claims[key] = value
+		}
 	}
-	expired := claims.ExpiresAt - time.Now().Unix()
-	_, err = Storer.Set(token, expired)
+	expire := time.Now().Unix() + r.duration
+	claims["exp"] = expire
+	claims["orig_iat"] = time.Now().Unix()
+	tokenString, err := token.SignedString(r.key)
 	if err != nil {
-		return err
+		return "", err
 	}
-	return nil
+
+	return tokenString, nil
 }
 
 // 根据token校验token是否有效
 // 如果token有效，则返回true，否则返回false
-func (r *Handle) ValidToken(token string) bool {
+func (r *Handle) TokenValid(token string) bool {
 	_, err := jwt.Parse(token, func(*jwt.Token) (interface{}, error) {
 		return r.key, nil
 	})
@@ -48,19 +58,48 @@ func (r *Handle) ValidToken(token string) bool {
 // 解析token，返回claims信息，
 // 如果token无效，则error将会展示错误信息，
 // 如果token有效，customClaims将会返回连接用户的信息
-func (r *Handle) parseToken(token string) (*customClaims, error) {
-	var jclaim = &customClaims{}
-	_, err := jwt.ParseWithClaims(token, jclaim, func(*jwt.Token) (interface{}, error) {
+func (r *Handle) TokenParse(token string) (*jwt.Token, error) {
+	return jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
+		if jwt.GetSigningMethod("HS256") != t.Method {
+			return nil, errors.New("invalid signing algorithm")
+		}
 		return r.key, nil
 	})
-	if err != nil {
-		return nil, errors.New("parase with claims failed.")
-	}
-	return jclaim, nil
 }
 
+//  销毁令牌
+// 临时存放到redis ，每次校验判断是否在redis中，如果在表示token无效
+func (r *Handle) TokenDestroy(token string) error {
+	jtoken, err := r.TokenParse(token)
+	if err != nil {
+		return err
+	}
+	claims := jtoken.Claims.(jwt.MapClaims)
+	exp := int64(claims["exp"].(float64))
+	expired := exp - time.Now().Unix()
+	if expired <= 0 {
+		expired = 0
+	}
+	_, err = Storer.Set(token, expired)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// ExtractClaimsFromToken help to extract the JWT claims from token
+func (r *Handle) ExtractClaimsFromToken(token *jwt.Token) MapClaims {
+	if token == nil {
+		return make(MapClaims)
+	}
+	claims := MapClaims{}
+	for key, value := range token.Claims.(jwt.MapClaims) {
+		claims[key] = value
+	}
+	return claims
+}
 func (r *Handle) ParseToken(token string) (MapClaims, error) {
-	claims, err := r.parseToken(token)
+	rclaims, err := r.TokenParse(token)
 	if err != nil {
 		return nil, errors.New("parase with claims failed.")
 	}
@@ -72,14 +111,14 @@ func (r *Handle) ParseToken(token string) (MapClaims, error) {
 	if exists {
 		return nil, errors.New("invalid token.")
 	}
-	return claims.mapClaims, nil
+	return r.ExtractClaimsFromToken(rclaims), nil
 }
 
 // 从Http的请求中获取Token，校验token是否有效
 // 如果token有效，则返回true，如果无效，则返回false
 func (r *Handle) ValidHttp(req *http.Request) bool {
 	token := r.httpToken(req)
-	return r.ValidToken(token)
+	return r.TokenValid(token)
 }
 
 // 从http请求中获取token，然后解析token
@@ -137,25 +176,12 @@ func (r *Handle) SetKey(key []byte) *Handle {
 	return r
 }
 
-// 生成token
-func (r *Handle) GenToken(private MapClaims) (string, error) {
-	r.lock.RLock()
-	defer r.lock.RUnlock()
-	customClaims := newClaims(r.Config, private)
-	c := jwt.NewWithClaims(jwt.SigningMethodHS256, customClaims)
-	token, err := c.SignedString(r.key)
-	if err != nil {
-		return "", err
-	}
-	return token, nil
-}
-
 // 创建jwtHandle实例对象
 func NewHandle(conf *Config) *Handle {
 	if conf == nil {
 		handleLock.RLock()
 		conf = defaultConfig
-		conf.key = []byte("github.com/dllgo/go-jwt")
+		conf.key = []byte("dllgo-go-jwt")
 		handleLock.RUnlock()
 	}
 	return &Handle{
